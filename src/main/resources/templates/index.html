@@ -6,9 +6,6 @@
     <!-- Chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Google Maps -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDky0AFO434gohwpE-dKGS07zkKshI0zMY&callback=initMap" async defer></script>
-
     <style>
         body {
             font-family: Arial;
@@ -114,8 +111,6 @@
         .active.green { background: limegreen; }
 
         canvas { margin-top: 20px; }
-
-        #map { height: 300px; margin-top: 20px; }
     </style>
 </head>
 
@@ -185,30 +180,29 @@
         <!-- 📊 Chart -->
         <canvas id="trafficChart"></canvas>
 
-        <!-- 📍 Map -->
-        <div id="map"></div>
-
     </div>
 
 </div>
 
 <script>
 
-let chart, map;
+let chart;
 
 function processData(){
-    let speed = parseInt(speed.value) || 0;
-    let emergency = emergency.checked;
+    let speedVal = parseInt(document.getElementById("speed").value) || 0;
+    let emergencyVal = document.getElementById("emergency").checked;
 
-    processStatus.value = emergency ? "Priority" : (speed > 80 ? "Overload" : "Normal");
+    document.getElementById("processStatus").value =
+        emergencyVal ? "Priority" :
+        (speedVal > 80 ? "Overload" : "Normal");
 }
 
 function addData(){
     const data = {
-        location: zone.value,
-        vehicleCount: parseInt(speed.value),
-        signalStatus: status.value,
-        processStatus: processStatus.value
+        location: document.getElementById("zone").value,
+        vehicleCount: parseInt(document.getElementById("speed").value),
+        signalStatus: document.getElementById("status").value,
+        processStatus: document.getElementById("processStatus").value
     };
 
     fetch('/traffic/add', {
@@ -238,7 +232,7 @@ function load(){
             </tr>`;
         });
 
-        tableBody.innerHTML = rows;
+        document.getElementById("tableBody").innerHTML = rows;
 
         renderChart(data);
 
@@ -258,7 +252,7 @@ function renderChart(data){
 
     if(chart) chart.destroy();
 
-    chart=new Chart(trafficChart,{
+    chart=new Chart(document.getElementById("trafficChart"),{
         type:'bar',
         data:{
             labels:Object.keys(zones),
@@ -268,27 +262,19 @@ function renderChart(data){
 }
 
 function updateSignal(s){
-    redLight.classList.remove("active");
-    yellowLight.classList.remove("active");
-    greenLight.classList.remove("active");
+    document.getElementById("redLight").classList.remove("active");
+    document.getElementById("yellowLight").classList.remove("active");
+    document.getElementById("greenLight").classList.remove("active");
 
-    if(s==="Red") redLight.classList.add("active","red");
-    else if(s==="Yellow") yellowLight.classList.add("active","yellow");
-    else greenLight.classList.add("active","green");
+    if(s==="Red") document.getElementById("redLight").classList.add("active","red");
+    else if(s==="Yellow") document.getElementById("yellowLight").classList.add("active","yellow");
+    else document.getElementById("greenLight").classList.add("active","green");
 }
 
 function clearTable(){
     if(confirm("Delete ALL data permanently?")){
         fetch('/traffic/deleteAll',{method:'DELETE'}).then(load);
     }
-}
-
-function initMap(){
-    map=new google.maps.Map(document.getElementById("map"),{
-        center:{lat:18.5204,lng:73.8567},
-        zoom:12
-    });
-    new google.maps.TrafficLayer().setMap(map);
 }
 
 load();

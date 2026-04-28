@@ -16,37 +16,43 @@ public class TrafficService {
     // 🚦 SAVE WITH IMPROVED AI LOGIC
     public TrafficData save(TrafficData data) {
 
-        int speed = data.getVehicleCount();
+        int traffic = data.getVehicleCount();
+
+        // 🔴 PRIORITY CHECK FIRST (IMPORTANT)
+        if ("Priority".equalsIgnoreCase(data.getProcessStatus())) {
+            data.setProcessStatus("Priority");
+            data.setSignalStatus("Green");   // Emergency override
+            return repo.save(data);
+        }
 
         // 🔹 AUTO PROCESS STATUS (SMART LEVELS)
         if (data.getProcessStatus() == null || data.getProcessStatus().isEmpty()) {
 
-            if (speed > 120) {
+            if (traffic > 120) {
                 data.setProcessStatus("Critical");
-            } else if (speed > 80) {
+            } else if (traffic > 80) {
                 data.setProcessStatus("Overload");
-            } else if (speed > 40) {
+            } else if (traffic > 40) {
                 data.setProcessStatus("Moderate");
             } else {
                 data.setProcessStatus("Normal");
             }
         }
 
-        // 🔹 AI SIGNAL CONTROL
-        if ("Priority".equalsIgnoreCase(data.getProcessStatus())) {
-            data.setSignalStatus("Green");  // Emergency always green
-        }
-        else if (speed > 120) {
-            data.setSignalStatus("Red");    // Critical traffic
-        }
-        else if (speed > 80) {
-            data.setSignalStatus("Red");    // Heavy traffic
-        }
-        else if (speed > 40) {
-            data.setSignalStatus("Yellow"); // Medium traffic
-        }
-        else {
-            data.setSignalStatus("Green");  // Normal traffic
+        // 🔹 AI SIGNAL CONTROL (CLEAN LOGIC)
+        switch (data.getProcessStatus()) {
+
+            case "Critical":
+            case "Overload":
+                data.setSignalStatus("Red");
+                break;
+
+            case "Moderate":
+                data.setSignalStatus("Yellow");
+                break;
+
+            default:
+                data.setSignalStatus("Green");
         }
 
         return repo.save(data);
