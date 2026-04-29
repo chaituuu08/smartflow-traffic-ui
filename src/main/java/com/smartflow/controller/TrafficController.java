@@ -15,29 +15,13 @@ public class TrafficController {
     @Autowired
     private TrafficService service;
 
-    // ✅ ADD DATA
     @PostMapping("/add")
     public TrafficData add(@RequestBody TrafficData data) {
-
-        System.out.println("Received Data:");
-        System.out.println("Location: " + data.getLocation());
-        System.out.println("Speed: " + data.getVehicleCount());
-        System.out.println("Signal: " + data.getSignalStatus());
-        System.out.println("Process: " + data.getProcessStatus());
-
         return service.save(data);
     }
 
-    // ✅ GET ALL DATA
     @GetMapping("/all")
     public List<TrafficData> getAll() {
         return service.getAll();
-    }
-
-    // ✅ DELETE ALL DATA (🔥 IMPORTANT)
-    @DeleteMapping("/deleteAll")
-    public String deleteAll() {
-        service.deleteAll();
-        return "All data deleted successfully";
     }
 }

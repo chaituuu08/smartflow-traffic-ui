@@ -13,9 +13,6 @@ public class TrafficData {
     private int vehicleCount;
     private String signalStatus;
 
-    // ✅ NEW FIELD
-    private String processStatus;
-
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -27,11 +24,4 @@ public class TrafficData {
 
     public String getSignalStatus() { return signalStatus; }
     public void setSignalStatus(String signalStatus) { this.signalStatus = signalStatus; }
-
-    // ✅ GETTER + SETTER (IMPORTANT)
-    public String getProcessStatus() { return processStatus; }
-    public void setProcessStatus(String processStatus) { this.processStatus = processStatus; }
 }
-
-
-

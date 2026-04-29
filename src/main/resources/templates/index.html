@@ -1,284 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SmartFlow Advanced Traffic System</title>
-
-    <!-- Chart -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <style>
-        body {
-            font-family: Arial;
-            background: #eef2f7;
-            margin: 0;
-        }
-
-        h2 {
-            text-align: center;
-            padding: 15px;
-            background: #1e3a8a;
-            color: white;
-            margin: 0;
-        }
-
-        .main {
-            display: flex;
-            padding: 20px;
-            gap: 20px;
-        }
-
-        .left {
-            width: 25%;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-
-        .left input, .left select {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-        }
-
-        .right {
-            width: 75%;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-            text-align: center;
-        }
-
-        th {
-            background: #1e3a8a;
-            color: white;
-        }
-
-        .buttons {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-        }
-
-        button {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            cursor: pointer;
-            color: white;
-            border-radius: 5px;
-        }
-
-        .add { background: green; }
-        .refresh { background: blue; }
-        .delete { background: red; }
-        .process { background: orange; }
-
-        .green { color: green; font-weight: bold; }
-        .red { color: red; font-weight: bold; }
-        .yellow { color: orange; font-weight: bold; }
-
-        /* 🚦 SIGNAL */
-        .signal-box {
-            width: 60px;
-            background: #222;
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
-
-        .light {
-            width: 40px;
-            height: 40px;
-            margin: 10px auto;
-            border-radius: 50%;
-            background: #555;
-        }
-
-        .active.red { background: red; }
-        .active.yellow { background: yellow; }
-        .active.green { background: limegreen; }
-
-        canvas { margin-top: 20px; }
-    </style>
+    <title>Traffic Dashboard</title>
 </head>
-
 <body>
 
-<h2>🚦 SmartFlow Traffic Management System</h2>
+<h2>Traffic Dashboard</h2>
 
-<div class="main">
+<input id="loc" placeholder="Location">
+<input id="count" placeholder="Vehicle Count">
+<input id="status" placeholder="Signal">
 
-    <div class="left">
+<button onclick="send()">Add</button>
 
-        <label>Vehicle ID</label>
-        <input id="vehicleId" placeholder="MH12AB1234">
-
-        <label>Speed</label>
-        <input id="speed" placeholder="km/h">
-
-        <label>Zone</label>
-        <input id="zone" placeholder="Zone A">
-
-        <label>Status</label>
-        <select id="status">
-            <option>Green</option>
-            <option>Yellow</option>
-            <option>Red</option>
-        </select>
-
-        <label>
-            <input type="checkbox" id="emergency"> Emergency Vehicle
-        </label>
-
-        <label>Process Status</label>
-        <input id="processStatus" readonly placeholder="Click Process">
-
-        <div class="buttons">
-            <button class="process" onclick="processData()">Process</button>
-            <button class="add" onclick="addData()">Add</button>
-            <button class="refresh" onclick="load()">Refresh</button>
-            <button class="delete" onclick="clearTable()">Clear</button>
-        </div>
-
-    </div>
-
-    <div class="right">
-
-        <!-- 🚦 SIGNAL -->
-        <div class="signal-box">
-            <div id="redLight" class="light"></div>
-            <div id="yellowLight" class="light"></div>
-            <div id="greenLight" class="light"></div>
-        </div>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Zone</th>
-                    <th>Speed</th>
-                    <th>Status</th>
-                    <th>Process</th>
-                    <th>Time</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-
-        <!-- 📊 Chart -->
-        <canvas id="trafficChart"></canvas>
-
-    </div>
-
-</div>
+<ul id="list"></ul>
 
 <script>
-
-let chart;
-
-function processData(){
-    let speedVal = parseInt(document.getElementById("speed").value) || 0;
-    let emergencyVal = document.getElementById("emergency").checked;
-
-    document.getElementById("processStatus").value =
-        emergencyVal ? "Priority" :
-        (speedVal > 80 ? "Overload" : "Normal");
-}
-
-function addData(){
-    const data = {
-        location: document.getElementById("zone").value,
-        vehicleCount: parseInt(document.getElementById("speed").value),
-        signalStatus: document.getElementById("status").value,
-        processStatus: document.getElementById("processStatus").value
-    };
-
-    fetch('/traffic/add', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(data)
-    }).then(load);
+function send(){
+fetch('/traffic/add',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({
+location:document.getElementById('loc').value,
+vehicleCount:document.getElementById('count').value,
+signalStatus:document.getElementById('status').value
+})
+}).then(()=>load());
 }
 
 function load(){
-    fetch('/traffic/all')
-    .then(res=>res.json())
-    .then(data=>{
-        let rows="";
-        let overload=[];
-
-        data.forEach(d=>{
-            if(d.processStatus==="Overload") overload.push(d.location);
-
-            rows += `<tr>
-                <td>${d.id}</td>
-                <td>${d.location}</td>
-                <td>${d.vehicleCount}</td>
-                <td class="${d.signalStatus.toLowerCase()}">${d.signalStatus}</td>
-                <td>${d.processStatus}</td>
-                <td>${new Date().toLocaleTimeString()}</td>
-            </tr>`;
-        });
-
-        document.getElementById("tableBody").innerHTML = rows;
-
-        renderChart(data);
-
-        if(data.length>0){
-            updateSignal(data[data.length-1].signalStatus);
-        }
-
-        if(overload.length>0){
-            alert("⚠ Overload at: " + overload.join(", "));
-        }
-    });
-}
-
-function renderChart(data){
-    let zones={};
-    data.forEach(d=>zones[d.location]=(zones[d.location]||0)+d.vehicleCount);
-
-    if(chart) chart.destroy();
-
-    chart=new Chart(document.getElementById("trafficChart"),{
-        type:'bar',
-        data:{
-            labels:Object.keys(zones),
-            datasets:[{label:'Traffic',data:Object.values(zones)}]
-        }
-    });
-}
-
-function updateSignal(s){
-    document.getElementById("redLight").classList.remove("active");
-    document.getElementById("yellowLight").classList.remove("active");
-    document.getElementById("greenLight").classList.remove("active");
-
-    if(s==="Red") document.getElementById("redLight").classList.add("active","red");
-    else if(s==="Yellow") document.getElementById("yellowLight").classList.add("active","yellow");
-    else document.getElementById("greenLight").classList.add("active","green");
-}
-
-function clearTable(){
-    if(confirm("Delete ALL data permanently?")){
-        fetch('/traffic/deleteAll',{method:'DELETE'}).then(load);
-    }
+fetch('/traffic/all')
+.then(r=>r.json())
+.then(data=>{
+let out="";
+data.forEach(d=>{
+out+= "<li>"+d.location+" | "+d.vehicleCount+" | "+d.signalStatus+"</li>";
+});
+document.getElementById('list').innerHTML=out;
+});
 }
 
 load();
-
 </script>
 
 </body>
